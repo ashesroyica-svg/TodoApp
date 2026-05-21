@@ -1,0 +1,30 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+
+# EF Core migrations lock
+*.db
+*.db-shm
+*.db-wal
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# Angular / Node
+node_modules/
+dist/
+.angular/
+*.js.map
+
+# Environment secrets
+appsettings.Development.json
+appsettings.Production.json
+
+# OS
+Thumbs.db
+.DS_Store
