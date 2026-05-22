@@ -7,6 +7,15 @@ export interface Task {
   completedDate?: string;
 }
 
+/** Dashboard statistics returned by GET /api/tasks/dashboard. */
+export interface Dashboard {
+  totalTasks: number;
+  completedTasks: number;
+  remainingTasks: number;
+  completedToday: number;
+  completedTodayPercentage: number;
+}
+
 /** Generic paginated result wrapper matching the backend PaginatedResultDto<T>. */
 export interface PaginatedResult<T> {
   items: T[];

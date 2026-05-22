@@ -17,4 +17,7 @@ public interface ITaskService
 
     /// <summary>Soft-deletes a task owned by the user.</summary>
     Task<ApiResponse<object>> DeleteTaskAsync(int userId, int taskId, CancellationToken ct = default);
+
+    /// <summary>Returns dashboard statistics for the authenticated user.</summary>
+    Task<ApiResponse<DashboardDto>> GetDashboardAsync(int userId, CancellationToken ct = default);
 }

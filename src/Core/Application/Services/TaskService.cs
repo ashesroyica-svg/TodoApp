@@ -85,6 +85,24 @@ public class TaskService : ITaskService
         return ApiResponse<object>.Ok(new object(), "Task deleted successfully.");
     }
 
+    /// <summary>Aggregates task counts and computes today's completion percentage.</summary>
+    public async Task<ApiResponse<DashboardDto>> GetDashboardAsync(int userId, CancellationToken ct = default)
+    {
+        var (total, completed, remaining, completedToday) =
+            await _taskRepository.GetDashboardStatsAsync(userId, ct);
+
+        var dto = new DashboardDto
+        {
+            TotalTasks = total,
+            CompletedTasks = completed,
+            RemainingTasks = remaining,
+            CompletedToday = completedToday,
+            CompletedTodayPercentage = total == 0 ? 0 : Math.Round((double)completedToday / total * 100, 1)
+        };
+
+        return ApiResponse<DashboardDto>.Ok(dto, "Dashboard loaded successfully.");
+    }
+
     private static TaskResponseDto MapToDto(TaskItem task) => new()
     {
         Id = task.Id,

@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { Task, PaginatedResult } from '../models/task.model';
+import { Task, PaginatedResult, Dashboard } from '../models/task.model';
 
 /** Provides typed HTTP methods for all task CRUD operations. */
 @Injectable({ providedIn: 'root' })
@@ -37,5 +37,10 @@ export class TaskService {
   /** Soft-deletes a task by ID. */
   deleteTask(id: number): Observable<ApiResponse<object>> {
     return this.http.delete<ApiResponse<object>>(`${this.baseUrl}/${id}`);
+  }
+
+  /** Fetches dashboard statistics for the authenticated user. */
+  getDashboard(): Observable<ApiResponse<Dashboard>> {
+    return this.http.get<ApiResponse<Dashboard>>(`${this.baseUrl}/dashboard`);
   }
 }

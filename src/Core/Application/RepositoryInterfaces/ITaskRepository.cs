@@ -22,4 +22,7 @@ public interface ITaskRepository
 
     /// <summary>Soft-deletes a task by setting IsDeleted to true. Returns false if the task was not found.</summary>
     Task<bool> SoftDeleteAsync(int id, int userId, CancellationToken ct = default);
+
+    /// <summary>Returns aggregate task counts for the dashboard: total, completed, remaining, and completed today.</summary>
+    Task<(int Total, int Completed, int Remaining, int CompletedToday)> GetDashboardStatsAsync(int userId, CancellationToken ct = default);
 }

@@ -80,6 +80,16 @@ public class TaskController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Returns task statistics for the authenticated user's dashboard.</summary>
+    [HttpGet("dashboard")]
+    [ProducesResponseType(typeof(ApiResponse<DashboardDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDashboard(CancellationToken ct)
+    {
+        var userId = GetUserIdFromToken();
+        var result = await _taskService.GetDashboardAsync(userId, ct);
+        return Ok(result);
+    }
+
     /// <summary>Soft-deletes a task by setting IsDeleted to true.</summary>
     [HttpDelete("{id}")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]

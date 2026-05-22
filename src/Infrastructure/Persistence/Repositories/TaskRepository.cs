@@ -75,4 +75,20 @@ public class TaskRepository : ITaskRepository
         await _context.SaveChangesAsync(ct);
         return true;
     }
+
+    /// <summary>Returns aggregate task counts for the dashboard in a single pass.</summary>
+    public async Task<(int Total, int Completed, int Remaining, int CompletedToday)> GetDashboardStatsAsync(
+        int userId, CancellationToken ct = default)
+    {
+        var today = DateTime.UtcNow.Date;
+        var baseQuery = _context.Tasks.Where(t => t.UserId == userId && !t.IsDeleted);
+
+        var total = await baseQuery.CountAsync(ct);
+        var completed = await baseQuery.CountAsync(t => t.IsCompleted, ct);
+        var completedToday = await baseQuery.CountAsync(
+            t => t.IsCompleted && t.CompletedDate != null &&
+                 t.CompletedDate.Value >= today && t.CompletedDate.Value < today.AddDays(1), ct);
+
+        return (total, completed, total - completed, completedToday);
+    }
 }

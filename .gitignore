@@ -21,7 +21,8 @@ dist/
 .angular/
 *.js.map
 
-# Environment secrets
+# Environment secrets — never commit real credentials
+appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 
