@@ -1,5 +1,5 @@
 import { Component, OnInit, DestroyRef, inject, signal, computed } from '@angular/core';
-import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { NgFor, NgIf, DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
@@ -9,6 +9,14 @@ import { ProjectService } from '../../core/services/project.service';
 import { Task, TaskPriority, PRIORITY_LABELS, PRIORITY_COLORS } from '../../core/models/task.model';
 import { Project } from '../../core/models/project.model';
 import { NavbarComponent } from '../../layouts/navbar/navbar.component';
+
+function futureDateValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const selected = new Date(control.value);
+  return selected < today ? { pastDate: true } : null;
+}
 
 /** Main todo page — displays task list with priority, due date, description, project filter, search, and pagination. */
 @Component({
@@ -41,7 +49,7 @@ export class TodoComponent implements OnInit {
     task: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(500)]],
     description: ['', Validators.maxLength(2000)],
     priority: [1],
-    dueDate: [''],
+    dueDate: ['', futureDateValidator],
     projectId: [null]
   });
 
@@ -51,6 +59,11 @@ export class TodoComponent implements OnInit {
   showTaskForm = false;
   errorMessage = '';
   taskError = '';
+
+  /** Today's date in YYYY-MM-DD format — used as the min attribute on the due date input. */
+  get todayDate(): string {
+    return new Date().toISOString().split('T')[0];
+  }
 
   /** Array of page numbers for the pagination control. */
   pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
@@ -107,8 +120,9 @@ export class TodoComponent implements OnInit {
 
   /** Submits the new task form. */
   addTask(): void {
+    this.taskForm.markAllAsTouched();
     if (this.taskForm.invalid) {
-      this.taskError = 'Please fill in the required fields.';
+      this.taskError = 'Please fix the errors below before adding the task.';
       return;
     }
 
