@@ -30,17 +30,18 @@ public class TaskController : ControllerBase
         return int.Parse(userIdClaim.Value);
     }
 
-    /// <summary>Returns a paginated list of tasks, with optional keyword search.</summary>
+    /// <summary>Returns a paginated list of tasks, with optional keyword search and project filter.</summary>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResultDto<TaskResponseDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTasks(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 8,
         [FromQuery] string? search = null,
+        [FromQuery] int? projectId = null,
         CancellationToken ct = default)
     {
         var userId = GetUserIdFromToken();
-        var result = await _taskService.GetTasksAsync(userId, page, pageSize, search, ct);
+        var result = await _taskService.GetTasksAsync(userId, page, pageSize, search, projectId, ct);
         return Ok(result);
     }
 

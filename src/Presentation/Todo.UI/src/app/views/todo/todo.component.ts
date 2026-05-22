@@ -1,13 +1,16 @@
 import { Component, OnInit, DestroyRef, inject, signal, computed } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgFor, NgIf, DatePipe } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TaskService } from '../../core/services/task.service';
-import { Task } from '../../core/models/task.model';
+import { ProjectService } from '../../core/services/project.service';
+import { Task, TaskPriority, PRIORITY_LABELS, PRIORITY_COLORS } from '../../core/models/task.model';
+import { Project } from '../../core/models/project.model';
 import { NavbarComponent } from '../../layouts/navbar/navbar.component';
 
-/** Main todo page — displays task list with add, search, toggle, delete, and pagination. */
+/** Main todo page — displays task list with priority, due date, description, project filter, search, and pagination. */
 @Component({
   selector: 'app-todo',
   standalone: true,
@@ -17,26 +20,61 @@ import { NavbarComponent } from '../../layouts/navbar/navbar.component';
 })
 export class TodoComponent implements OnInit {
   private readonly taskService = inject(TaskService);
+  private readonly projectService = inject(ProjectService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
 
   tasks = signal<Task[]>([]);
+  projects = signal<Project[]>([]);
   totalCount = signal(0);
   totalPages = signal(0);
   currentPage = signal(1);
   readonly pageSize = 8;
 
-  taskControl = new FormControl('');
+  activeProjectId: number | undefined = undefined;
+
+  readonly priorityLabels = PRIORITY_LABELS;
+  readonly priorityColors = PRIORITY_COLORS;
+
+  taskForm: FormGroup = this.fb.group({
+    task: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(500)]],
+    description: ['', Validators.maxLength(2000)],
+    priority: [1],
+    dueDate: [''],
+    projectId: [null]
+  });
+
   searchControl = new FormControl('');
   searchQuery = '';
 
+  showTaskForm = false;
   errorMessage = '';
   taskError = '';
 
   /** Array of page numbers for the pagination control. */
   pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
+  /** The currently active project (for display in the header). */
+  activeProject = computed(() =>
+    this.activeProjectId !== undefined
+      ? this.projects().find(p => p.id === this.activeProjectId)
+      : undefined
+  );
+
   ngOnInit(): void {
-    this.loadTasks(1);
+    this.projectService.getProjects().subscribe({
+      next: res => {
+        if (res.success && res.data) this.projects.set(res.data);
+      }
+    });
+
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const pid = params['projectId'] ? Number(params['projectId']) : undefined;
+      this.activeProjectId = pid;
+      if (pid !== undefined) this.taskForm.patchValue({ projectId: pid });
+      this.loadTasks(1);
+    });
 
     this.searchControl.valueChanges.pipe(
       debounceTime(400),
@@ -51,7 +89,7 @@ export class TodoComponent implements OnInit {
 
   /** Fetches a page of tasks from the API and updates local state. */
   loadTasks(page: number): void {
-    this.taskService.getTasks(page, this.pageSize, this.searchQuery).subscribe({
+    this.taskService.getTasks(page, this.pageSize, this.searchQuery, this.activeProjectId).subscribe({
       next: response => {
         if (response.success && response.data) {
           this.tasks.set(response.data.items);
@@ -67,20 +105,27 @@ export class TodoComponent implements OnInit {
     });
   }
 
-  /** Validates the new-task input and calls the create API. */
+  /** Submits the new task form. */
   addTask(): void {
-    const taskText = this.taskControl.value?.trim();
-    if (!taskText) {
-      this.taskError = 'Task description cannot be empty.';
+    if (this.taskForm.invalid) {
+      this.taskError = 'Please fill in the required fields.';
       return;
     }
 
     this.taskError = '';
+    const { task, description, priority, dueDate, projectId } = this.taskForm.value;
 
-    this.taskService.createTask(taskText).subscribe({
+    this.taskService.createTask({
+      task,
+      description: description?.trim() || undefined,
+      priority: +priority as TaskPriority,
+      dueDate: dueDate || undefined,
+      projectId: projectId != null && projectId !== '' ? +projectId : undefined
+    }).subscribe({
       next: response => {
         if (response.success) {
-          this.taskControl.setValue('');
+          this.taskForm.reset({ task: '', description: '', priority: 1, dueDate: '', projectId: this.activeProjectId ?? null });
+          this.showTaskForm = false;
           this.searchQuery = '';
           this.searchControl.setValue('', { emitEvent: false });
           this.loadTasks(1);
@@ -127,5 +172,11 @@ export class TodoComponent implements OnInit {
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages()) return;
     this.loadTasks(page);
+  }
+
+  /** Clears the project filter and shows all tasks. */
+  clearProjectFilter(): void {
+    this.activeProjectId = undefined;
+    this.loadTasks(1);
   }
 }

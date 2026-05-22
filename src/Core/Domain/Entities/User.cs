@@ -11,4 +11,5 @@ public class User
     public DateTime? UpdatedDate { get; set; }
     public bool IsActive { get; set; } = true;
     public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
+    public ICollection<Project> Projects { get; set; } = new List<Project>();
 }

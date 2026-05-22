@@ -1,1 +1,11 @@
-// Task card and pagination use Bootstrap utilities; completed-task strikethrough in styles.scss
+.task-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.min-w-0 {
+  min-width: 0;
+}

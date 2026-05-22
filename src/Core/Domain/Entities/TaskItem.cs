@@ -5,6 +5,9 @@ public class TaskItem
 {
     public int Id { get; set; }
     public string Task { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public TaskPriority Priority { get; set; } = TaskPriority.Medium;
+    public DateTime? DueDate { get; set; }
     public bool IsCompleted { get; set; } = false;
     public bool IsDeleted { get; set; } = false;
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
@@ -12,4 +15,6 @@ public class TaskItem
     public DateTime? CompletedDate { get; set; }
     public int UserId { get; set; }
     public User User { get; set; } = null!;
+    public int? ProjectId { get; set; }
+    public Project? Project { get; set; }
 }
